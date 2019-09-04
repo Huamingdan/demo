@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<!-- <script src="./myfly.js"></script>
+	<script src="./Game.js"></script> -->
+	<style>
+		body{
+			background: url(./images/qbg.jpg);
+		}
+	</style>
+</head>
+<body>
+	<div id="bg"></div>
+</body>
+<script>
+	window.onload = function(){
+		Game.exe();
+	}
+	var Game = {
+		//启动游戏(初始化场景)
+		exe : function(){
+			document.body.style.backgroundColor = "#000";
+			//初始化背景
+			var bg = document.createElement("div");
+				bg.id = "gamebox";
+				bg.style.width = "300px";
+				bg.style.height = "520px";
+				//bg.style.backgroundColor = "#ccc";
+				bg.style.background = "url(./images/bg.jpg)";
+				bg.style.border = "7px solid #4f5555";
+				bg.style.margin = "50px auto";
+				bg.style.position = "relative";
+				//bg.style.border-radius = "5";
+				//bg.style.overflow = "hidden";
+			document.body.appendChild(bg);
+			this.init();
+		},
+
+		score : 0,
+
+		gameoff : false,
+
+		init : function(){
+			//document.body.style.backgroundColor = "#000";
+			var This = this;
+			var bg = document.getElementById("gamebox");
+			bg.innerHTML = "";
+			
+			Game.score = 0;
+			Game.gameoff = false;
+			//游戏名
+			var yxm = document.createElement("h1");
+			yxm.style.margin = "40px 85px 20px 85px";
+			yxm.innerHTML = "飞机大战";
+			yxm.style.color = "#f2eada";
+			bg.appendChild(yxm);
+
+			//难度
+			for(var i = 0; i < 4; i++){
+				var nd = document.createElement("p");
+				nd.index = i;
+				nd.style.cssText = "font-size: 14px; font-color: #000;width:150px;height:40px;margin:50px auto; text-align:center;line-height:40px;background:#fff;cursor:pointer;opacity:0.6;border-radius:10px";
+				switch(i){
+					case 0:
+						nd.innerHTML = "简单";
+						break;
+					case 1:
+						nd.innerHTML = "一般";
+						break;
+					case 2:
+						nd.innerHTML = "困难";
+						break;
+					case 3:
+						nd.innerHTML = "地狱";
+						break;
+				}
+				nd.onmouseenter = function(){
+					this.style.backgroundColor = "#f60";
+					this.style.color = "#fff";
+				}
+				nd.onmouseleave = function(){
+					this.style.backgroundColor = "#fff";
+					this.style.color = "#000";
+				}
+				nd.onclick = function(e){
+				    e = e || window.event;
+				    var idx = this.index + 1;
+					This.start(this.index,bg,e);
+					bg.style.background = "url(./images/bg"+idx+".jpg)";
+				}
+				bg.appendChild(nd);
+			}
+		},
+
+		//开始游戏
+		start : function(index,bgbox,e){
+			bgbox.innerHTML = "";
+			var score = document.createElement("span");
+				score.cssText = "position:absolute;left:20px;top:20px";
+				score.innerHTML = "分数： " + this.score;
+			bgbox.appendChild(score);
+			this.plane(bgbox,e,index);
+			this.enemy(bgbox,score,index);
+			this.treasure(bgbox,);
+			this.strong(bgbox);
+		},
+
+		//飞机
+		plane : function(bgbox,e,index){
+			var x = e.pageX ;
+			var y = e.pageY ;
+			var plane = document.createElement("img");
+			plane.src = "./images/myplane.png";
+			plane.width = "40";
+			plane.height = "26";
+			plane.id = "plane";
+			var top = y-bgbox.offsetTop-parseInt(bgbox.style.borderWidth)-plane.height/2;
+			var left = x-bgbox.offsetLeft-parseInt(bgbox.style.borderWidth)-plane.width/2;
+			plane.style.cssText = "display:block ;position:absolute ;left:"+(left)+"px;top:"+(top)+"px;"
+			bgbox.appendChild(plane);
+
+			window.onresize = function(){
+				left = x-bgbox.offsetLeft-parseInt(bgbox.style.borderWidth)-plane.width/2;
+			}
+
+			document.onmousemove = function(e){
+				e = e || window.event;
+				top = e.pageY-bgbox.offsetTop-parseInt(bgbox.style.borderWidth)-plane.height/2;
+				if (top < bgbox.offsetTop-parseInt(bgbox.style.borderWidth)-plane.height) {
+					top = bgbox.offsetTop-parseInt(bgbox.style.borderWidth)-plane.height;
+				}
+				else if(top > 480){
+					top = 480;
+				}
+				left = e.pageX-bgbox.offsetLeft-parseInt(bgbox.style.borderWidth)-plane.width/2;
+				if (left < -30) {
+					left = -30;
+				}
+				else if (left > 300-plane.width/2) {
+					left = 270;
+				};
+				plane.style.cssText = "display:block ;position:absolute ;left:"+(left)+"px;top:"+(top)+"px";
+			}
+			this.bullet(plane,bgbox,index);
+		},
+
+		//子弹
+		bullet : function(plane,bgbox,index){
+
+			var speed = 0;
+			switch (index) {
+				case 0 :
+					speed = 400;
+					break;
+				case 1 :
+					speed = 300;
+					break;
+				case 2 :
+					speed = 200;
+					break;
+				case 3 :
+					speed = 100;
+					break;
+			}
+
+		
+			this.bullettimer = setInterval(function(){
+				var bullet = document.createElement("img");
+					bullet.src = "./images/bullet.png";
+					bullet.width = 10;
+					bullet.height = 30;
+					bullet.className = "bullet";
+				var top = plane.offsetTop-bullet.height;
+				var left = plane.offsetLeft+plane.width/2-bullet.width/2;
+				bullet.style.position = "absolute";
+				bullet.style.left = left +"px";
+				bullet.style.top = top + "px";
+				bgbox.appendChild(bullet);
+
+				bullet.timer = setInterval(function(){
+					if (!bullet.parentNode) {
+						clearInterval(bullet.timer);
+					};
+					bullet.style.top = bullet.offsetTop-3+"px";
+					//子弹跑出去清除定时器和bullet节点
+					if (bullet.offsetTop < -bullet.height) {
+						clearInterval(bullet.timer);
+						bullet.parentNode.removeChild(bullet);
+					};
+				},10)
+			},speed)    /////难度控制
+		},
+
+		enemy : function(bgbox,score,index){
+
+			var a = 0;
+			switch(index) {
+				case 0:
+					a = 1;
+					break;
+				case 1:
+					a = 2;
+					break;
+				case 2:
+					a = 3;
+					break;
+				case 3:
+					a = 4;
+					break;
+			}
+
+			this.enemytimer = setInterval(function(){
+				var enemy = document.createElement("img");
+					enemy.src="./images/enemy.png";
+					enemy.width = 35;
+					enemy.height = 40;
+					enemy.id = "enemy";
+				var leftmi = 0;
+				var leftma = bgbox.clientWidth - enemy.width;
+				var left = Math.random()*(leftma - leftmi) + leftmi;
+					enemy.style.cssText = "position:absolute; top:"+(-enemy.height)+"px; left:"+left+"px"
+
+				var enemybullet = document.createElement("img");
+					enemybullet.src = "./images/enemybullet.png";
+					enemybullet.width = 15;
+					enemybullet.height = 50;
+					enemybullet.style.cssText = "position:absolute;top:"+(-enemy.height/2)+"px;left:"+(left+10)+"px";
+
+				bgbox.appendChild(enemybullet);
+				bgbox.appendChild(enemy);
+				
+				var b = Math.random()* a +1;
+				
+				enemy.timer = setInterval(function(){
+					enemy.style.top = enemy.offsetTop + b + "px";
+					if (enemy.offsetTop > bgbox.clientHeight) {
+						clearInterval(enemy.timer);
+						enemy.parentNode.removeChild(enemy);
+					};
+				},13)
+
+				var c = b + a;
+				enemybullet.timer = setInterval(function(){
+					enemybullet.style.top = enemybullet.offsetTop + c + "px";
+					if (enemybullet.offsetTop > bgbox.clientHeight) {
+						clearInterval(enemybullet.timer);
+						enemybullet.parentNode.removeChild(enemybullet);
+					};
+				},13)
+				//和子弹的碰撞检测
+				var allbullet = document.getElementsByClassName("bullet");
+				enemy.pzbullet = setInterval(function(){
+					for (var i = 0; i < allbullet.length; i++) {
+						if (Game.pump(enemy,allbullet[i])) {
+							Game.score++;
+							score.innerHTML = Game.score;
+							clearInterval(enemy.pzbullet);
+							clearInterval(enemy.pzplane);
+							allbullet[i].parentNode.removeChild(allbullet[i]);
+							enemy.src = "./images/boom2.png";
+							setTimeout(function(){
+								enemy.parentNode.removeChild(enemy);
+							},300)
+						}
+					}
+				},50)
+
+
+				
+
+				//飞机之间的碰撞检测
+				var plane = document.getElementById("plane");
+				enemy.pzplane = setInterval(function(){
+
+					if (Game.gameoff) {
+						clearInterval(enemy.pzplane);
+					};
+
+					if (Game.pump(enemy,plane)) {
+						Game.gameoff = true;
+						//clearInterval(dj.pzplane);
+						clearInterval(Game.bullettimer);
+						clearInterval(Game.enemytimer);
+						clearInterval(Game.treasuretimer);
+						clearInterval(Game.strongtimer);
+						enemy.src = "./images/boom2.png";
+						plane.src ="./images/boom2.png";
+						setTimeout(function(){
+							Game.over(bgbox,Game.score);
+						},300)
+					};
+				},50)
+
+
+				//敌机子弹和飞机的碰撞检测
+				enemybullet.pzplane = setInterval(function(){
+					if (Game.gameoff) {
+						clearInterval(enemybullet.pzplane);
+					};
+
+					if (Game.pump(enemybullet,plane)) {
+						Game.gameoff = true;
+						clearInterval(Game.bullettimer);
+						clearInterval(Game.enemytimer);
+						clearInterval(Game.treasuretimer);
+						clearInterval(Game.strongtimer);
+						plane.src ="./images/boom2.png";
+						setTimeout(function(){
+							Game.over(bgbox,Game.score);
+						},300)
+					};
+				},50)
+			},700)
+		},
+
+		
+		treasure : function(bgbox,score){
+			this.treasuretimer = setInterval(function(){
+				var treasure = document.createElement("img");
+					treasure.src="./images/treasure.png";
+					treasure.width = 35;
+					treasure.height = 40;
+					treasure.className = "treasure";
+				var leftmi = 0;
+				var leftma = bgbox.clientWidth - treasure.width;
+				var left = Math.random()*(leftma - leftmi) + leftmi;
+					treasure.style.cssText = "position:absolute; top:"+(-treasure.height)+"px; left:"+left+"px";
+				bgbox.appendChild(treasure);
+
+				treasure.timer = setInterval(function(){
+					treasure.style.top = treasure.offsetTop + 3 + "px";
+					if (treasure.offsetTop > bgbox.clientHeight) {
+						clearInterval(treasure.timer);
+						treasure.parentNode.removeChild(treasure);
+					};
+				},13)
+
+				var plane = document.getElementById("plane");
+				//alltreasure = document.getElementsByClassName("treasure");
+				treasure.pzplane = setInterval(function(){
+					//for (var i = 0; i < alltreasure.length; i++) {
+						if (Game.pump(plane,treasure)) {
+							Game.score += 10;
+							clearInterval(treasure.pzplane);
+							treasure.parentNode.removeChild(treasure);
+							setTimeout(function(){
+								treasure.parentNode.removeChild(treasure);
+							},300)
+						}
+					//}
+				},50)
+			},10000)
+		},
+		
+
+		/*strong : function(bgbox,plane){
+			this.strongtimer = setInterval(function(){
+				var strong = document.createElement("img");
+					strong.src="./images/strong.png";
+					strong.width = 35;
+					strong.height = 40;
+					strong.className = "strong";
+				var leftmi = 0;
+				var leftma = bgbox.clientWidth - strong.width;
+				var left = Math.random()*(leftma - leftmi) + leftmi;
+					strong.style.cssText = "position:absolute; top:"+(-strong.height)+"px; left:"+left+"px";
+				bgbox.appendChild(strong);
+
+				strong.timer = setInterval(function(){
+					strong.style.top = strong.offsetTop + 3 + "px";
+					if (strong.offsetTop > bgbox.clientHeight) {
+						clearInterval(strong.timer);
+						strong.parentNode.removeChild(strong);
+					};
+				},13)
+
+				var allbullet = document.getElementsByClassName("bullet");
+				var plane = document.getElementById("plane");
+				//allstrong = document.getElementsByClassName("strong");
+				strong.pzplane = setInterval(function(){
+					//for (var i = 0; i < allstrong.length; i++) {
+						if (Game.pump(plane,strong)) {
+							clearInterval(strong.pzplane);
+							strong.parentNode.removeChild(strong);
+							/*for (var i = 0; i < allbullet.length; i++) {
+								allbullet[i].src = "./images/bullet2.png";
+							};*/
+		/*					Game.index++;
+							//bullet.speed = bullet.speed/2;
+							setTimeout(function(){
+								strong.parentNode.removeChild(strong);
+							},300)
+						}
+					//}
+				},50)
+			},5000)*/
+		//},
+
+		//碰撞检测
+		pump : function(obj1,obj2){
+			var top1 = obj1.offsetTop;
+			var bottom1 = top1 + obj1.height;
+			var left1 = obj1.offsetLeft;
+			var right1 = left1 + obj1.clientWidth;
+
+			var top2 = obj2.offsetTop;
+			var bottom2 = top2 + obj2.height;
+			var left2 = obj2.offsetLeft;
+			var right2 = left2 + obj2.clientWidth;
+
+			if(right2 < left1+2 || left2 > right1-2 || bottom2 < top1 || top2 > bottom1){
+				return false;//not
+			}
+			else{
+				return true;//yes
+			}
+		},
+		over : function(bgbox,score){
+			bgbox.innerHTML = "";
+			var msgdiv = document.createElement("div");
+				msgdiv.style.cssText = "width:200px;height:400px;margin:50px 100px";
+			var msg = document.createElement("h1");
+				msg.innerHTML = "Game Over";
+				msg.style.cssText = "margin:50px -35px";
+			var scorediv = document.createElement("div");
+				scorediv.style.cssText = "margin:30px 15px"
+				scorediv.innerHTML = "得分：" + score + "  分";
+			var restart = document.createElement("div");
+				restart.style.cssText = "width:100px;height:40px;text-align:center;line-height:40px;background:#ccc;color:#000;margin:20px 3px;cursor:pointer;opacity:0.7;border-radius:5px";
+				restart.innerHTML = "重新开始";
+			restart.onclick = function(){
+					Game.init();
+					bgbox.style.background = "url(./images/bg.jpg)";
+				}
+			msgdiv.appendChild(msg);
+			msgdiv.appendChild(scorediv);
+			msgdiv.appendChild(restart);
+			
+			bgbox.appendChild(msgdiv);
+		}
+	}
+
+</script>
+
+
+</html>
